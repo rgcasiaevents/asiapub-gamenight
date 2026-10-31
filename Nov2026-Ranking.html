@@ -66,8 +66,17 @@ async function updateRankings() {
       /^\d+$/.test(String(item.rank ?? '').trim()) &&
       String(item.name ?? '').trim() !== ''
     );
-    lastSuccessfulData=actualPlayers;
-    renderRankings(actualPlayers);
+    // Show only valid ranked entries from the spreadsheet, in rank order.
+    const uniqueRanks = new Map();
+    actualPlayers.forEach(item => {
+      const rank = Number(item.rank);
+      if (!uniqueRanks.has(rank)) uniqueRanks.set(rank, {
+        rank, name: String(item.name).trim(), wins: Number(item.wins) || 0
+      });
+    });
+    const cleanRows = [...uniqueRanks.values()].sort((a,b) => a.rank-b.rank);
+    lastSuccessfulData=cleanRows;
+    renderRankings(cleanRows);
     showStatus('Live Google Sheets data • Last checked: '+new Date().toLocaleTimeString());
   } catch(e) {
     if (lastSuccessfulData===null) {
